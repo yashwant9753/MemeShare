@@ -10,6 +10,7 @@ import 'package:socialnetwork/models/user.dart';
 import 'package:socialnetwork/networkColors.dart';
 import 'package:socialnetwork/pages/create_account.dart';
 import 'package:socialnetwork/pages/profile.dart';
+import 'package:socialnetwork/pages/search.dart';
 import 'package:socialnetwork/pages/timeline.dart';
 
 final GoogleSignIn googleSignIn = GoogleSignIn();
@@ -125,7 +126,7 @@ class _HomeState extends State<Home> {
             child: Text("Logout"),
           ),
           // TimeLine(),
-          // Search(),
+          Search(),
           // Upload(),
           // ActivityFeed(),
           Profile()
