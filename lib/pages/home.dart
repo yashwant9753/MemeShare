@@ -12,6 +12,7 @@ import 'package:socialnetwork/pages/create_account.dart';
 import 'package:socialnetwork/pages/profile.dart';
 import 'package:socialnetwork/pages/search.dart';
 import 'package:socialnetwork/pages/timeline.dart';
+import 'package:socialnetwork/pages/upload.dart';
 
 final GoogleSignIn googleSignIn = GoogleSignIn();
 final CollectionReference userRef =
@@ -127,7 +128,7 @@ class _HomeState extends State<Home> {
           ),
           // TimeLine(),
           Search(),
-          // Upload(),
+          Upload(),
           // ActivityFeed(),
           Profile()
         ],
