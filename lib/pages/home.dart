@@ -4,11 +4,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_icons/flutter_icons.dart';
+
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:socialnetwork/models/user.dart';
 import 'package:socialnetwork/networkColors.dart';
 import 'package:socialnetwork/pages/create_account.dart';
+import 'package:socialnetwork/pages/pickfile.dart';
 import 'package:socialnetwork/pages/profile.dart';
 import 'package:socialnetwork/pages/search.dart';
 import 'package:socialnetwork/pages/timeline.dart';
@@ -128,9 +129,12 @@ class _HomeState extends State<Home> {
           ),
           // TimeLine(),
           Search(),
-          Upload(),
+          Upload(
+            currentUser: currentUser,
+          ),
           // ActivityFeed(),
-          Profile()
+          // Profile()
+          PickFile()
         ],
         controller: pageController,
         onPageChanged: onPageChanged,
