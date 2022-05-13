@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:socialnetwork/models/user.dart';
 import 'package:socialnetwork/networkColors.dart';
@@ -156,9 +158,12 @@ class _UploadState extends State<Upload> {
     return downloadUrl;
   }
 
-  /// Create the collection in FirebaseStorage in Post Collection
   createPostInFirestore(
-      {String mediaUrl, String location, String description}) {
+
+      /// Create the collection in FirebaseStorage in Post Collection
+      {String mediaUrl,
+      String location,
+      String description}) {
     postRef.doc(widget.currentUser.id).collection("userPosts").doc(postId).set({
       "postId": postId,
       "ownerId": widget.currentUser.id,
@@ -171,8 +176,8 @@ class _UploadState extends State<Upload> {
     });
   }
 
-  /// handle the post Button
   handleSubmitt() async {
+    /// handle the post Button
     setState(() {
       isUploading = true;
     });
@@ -192,8 +197,8 @@ class _UploadState extends State<Upload> {
     });
   }
 
-  /// building the Post Page
   Scaffold buildUploadForm() {
+    /// building the Post Page
     return Scaffold(
       appBar: AppBar(
         centerTitle: true,
@@ -294,7 +299,7 @@ class _UploadState extends State<Upload> {
                 borderRadius: BorderRadius.circular(30.0),
               ),
               color: Colors.blue,
-              onPressed: () => print('get user location'),
+              onPressed: () => getUserLocation(),
               icon: Icon(
                 Icons.my_location,
                 color: Colors.white,
@@ -306,9 +311,46 @@ class _UploadState extends State<Upload> {
     );
   }
 
+  ////  get the user current loaction
+  getUserLocation() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      return Future.error('Location services are disabled');
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        return Future.error('Location permissions are denied');
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      return Future.error(
+          'Location permissions are permanently denied, we cannot request permissions.');
+    }
+    Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high);
+    List<Placemark> placemarks =
+        await placemarkFromCoordinates(position.latitude, position.longitude);
+
+    Placemark placemark = placemarks[0];
+
+    String completeAddress =
+        '${placemark.subThoroughfare} ${placemark.thoroughfare}, ${placemark.subLocality} ${placemark.locality}, ${placemark.subAdministrativeArea}, ${placemark.administrativeArea} ${placemark.postalCode}, ${placemark.country}';
+
+    String formattedAddress =
+        "${placemark.locality}, ${placemark.postalCode}, ${placemark.administrativeArea} ${placemark.country}";
+    locationController.text = formattedAddress;
+  }
+
   @override
-  //// Widget Management
   Widget build(BuildContext context) {
+    //// Widget Management
     return image == null ? buildSplashScreen() : buildUploadForm();
   }
 }
