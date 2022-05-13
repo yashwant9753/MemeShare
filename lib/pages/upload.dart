@@ -1,13 +1,22 @@
+import 'dart:async';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:socialnetwork/models/user.dart';
 import 'package:socialnetwork/networkColors.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
+import 'package:socialnetwork/pages/home.dart';
 import 'dart:core';
 
 import 'package:socialnetwork/widgets/progress.dart';
+import "package:image/image.dart" as Im;
+import 'package:socialnetwork/widgets/snackBar.dart';
+import 'package:uuid/uuid.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 class Upload extends StatefulWidget {
   final User currentUser;
@@ -19,9 +28,25 @@ class Upload extends StatefulWidget {
 }
 
 class _UploadState extends State<Upload> {
+  ///    file from devices
   XFile file;
+
   bool isUploading = false;
 
+  /// create unique postId use Uuid Package
+  String postId = Uuid().v4();
+
+  File compressedImage;
+  File image;
+
+  /// from the xfile to file datatype
+
+  String anan = "dwad";
+
+  TextEditingController locationController = TextEditingController();
+  TextEditingController captionController = TextEditingController();
+
+  /// Take Photo from tha camera
   handleTakePhoto() async {
     Navigator.pop(context);
     XFile file = await ImagePicker().pickImage(
@@ -29,19 +54,28 @@ class _UploadState extends State<Upload> {
       maxHeight: 675,
       maxWidth: 960,
     );
+    if (file == null) {
+      return;
+    }
     setState(() {
-      this.file = file;
+      this.image = File(file.path);
     });
   }
 
+  //// Choose image from gallery
   handleChooseFromGallery() async {
     Navigator.pop(context);
     XFile file = await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (file == null) {
+      return;
+    }
     setState(() {
-      this.file = file;
+      this.image = File(file.path);
+      ;
     });
   }
 
+  /////// Image selection option Dialogbox
   selectImage(parentContext) {
     return showDialog(
       context: parentContext,
@@ -64,6 +98,7 @@ class _UploadState extends State<Upload> {
     );
   }
 
+  /// Created the upload Screen
   Container buildSplashScreen() {
     return Container(
       color: Colors.white,
@@ -92,18 +127,72 @@ class _UploadState extends State<Upload> {
     );
   }
 
+  // clear the post page after uploading the Photo
   clearImage() {
     setState(() {
-      file = null;
+      image = null;
     });
   }
 
-  handleSubmitt() {
+  /// compress the image file
+  compressImage() async {
+    final tempDir = await getTemporaryDirectory();
+    final path = tempDir.path;
+    Im.Image imageFile = Im.decodeImage(image.readAsBytesSync());
+    final compressedImageFile = File('$path/img_$postId.jpg')
+      ..writeAsBytesSync(Im.encodeJpg(imageFile, quality: 85));
+    setState(() {
+      compressedImage = compressedImageFile;
+    });
+  }
+
+  /// upload the image in firebase then return the image url from firebase storage
+  Future<String> uploadImage(imageFile) async {
+    UploadTask uploadTask =
+        storageRef.child("post_$postId.jpg").putFile(imageFile);
+    TaskSnapshot storageSnap =
+        await uploadTask.whenComplete(() => print("Complete"));
+    String downloadUrl = await storageSnap.ref.getDownloadURL();
+    return downloadUrl;
+  }
+
+  /// Create the collection in FirebaseStorage in Post Collection
+  createPostInFirestore(
+      {String mediaUrl, String location, String description}) {
+    postRef.doc(widget.currentUser.id).collection("userPosts").doc(postId).set({
+      "postId": postId,
+      "ownerId": widget.currentUser.id,
+      "username": widget.currentUser.username,
+      "mediaUrl": mediaUrl,
+      "description": description,
+      "location": location,
+      "timestamp": timeStamp,
+      "likes": {}
+    });
+  }
+
+  /// handle the post Button
+  handleSubmitt() async {
     setState(() {
       isUploading = true;
     });
+    await compressImage();
+    String mediaUrl = await uploadImage(image);
+    createPostInFirestore(
+        mediaUrl: mediaUrl,
+        location: locationController.text,
+        description: captionController.text);
+    captionController.clear();
+    locationController.clear();
+
+    setState(() {
+      image = null;
+      isUploading = false;
+      // postId = Uuid().v4(); Create new PostId
+    });
   }
 
+  /// building the Post Page
   Scaffold buildUploadForm() {
     return Scaffold(
       appBar: AppBar(
@@ -149,7 +238,7 @@ class _UploadState extends State<Upload> {
                   decoration: BoxDecoration(
                     image: DecorationImage(
                       fit: BoxFit.cover,
-                      image: FileImage(File(file.path)),
+                      image: FileImage(image),
                     ),
                   ),
                 ),
@@ -166,6 +255,7 @@ class _UploadState extends State<Upload> {
             title: Container(
               width: 250.0,
               child: TextField(
+                controller: captionController,
                 decoration: InputDecoration(
                   hintText: "Write a caption...",
                   border: InputBorder.none,
@@ -183,6 +273,7 @@ class _UploadState extends State<Upload> {
             title: Container(
               width: 250.0,
               child: TextField(
+                controller: locationController,
                 decoration: InputDecoration(
                   hintText: "Where was this photo taken?",
                   border: InputBorder.none,
@@ -216,29 +307,8 @@ class _UploadState extends State<Upload> {
   }
 
   @override
+  //// Widget Management
   Widget build(BuildContext context) {
-    return file == null ? buildSplashScreen() : buildUploadForm();
+    return image == null ? buildSplashScreen() : buildUploadForm();
   }
 }
-
- // handleChooseFromGallery() async {
-  //   Navigator.pop(context);
-  //   // XFile file = await ImagePicker().pickImage(source: ImageSource.gallery);
-  //   // setState(() {
-  //   //   this.file = file;
-  //   // });
-  //   try {
-  //     final result = await FilePicker.platform.pickFiles();
-
-  //     // open single file
-  //     if (result != null) {
-  //       setState(() {
-  //         image = File(result.files.first.path.toString());
-
-  //         print(image.toString());
-  //       });
-  //     }
-  //   } on PlatformException catch (e) {
-  //     print("Something is Wrong : $e");
-  //   }
-  // }
