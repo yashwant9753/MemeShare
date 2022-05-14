@@ -14,7 +14,6 @@ class _PickFileState extends State<PickFile> {
     OpenFile.open(file.path);
   }
 
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(

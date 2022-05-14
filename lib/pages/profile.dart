@@ -1,9 +1,11 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:socialnetwork/models/user.dart';
 import 'package:socialnetwork/networkColors.dart';
 import 'package:socialnetwork/pages/edit_profile.dart';
 import 'package:socialnetwork/pages/home.dart';
 import 'package:socialnetwork/widgets/header.dart';
+import 'package:socialnetwork/widgets/post.dart';
 import 'package:socialnetwork/widgets/progress.dart';
 
 class Profile extends StatefulWidget {
@@ -17,7 +19,30 @@ class Profile extends StatefulWidget {
 
 class _ProfileState extends State<Profile> {
   final String currentuserId = currentUser?.id;
+  bool isLoading = false;
+  int postCount = 0;
+  List<Post> posts = [];
 
+  getProfilePosts() async {
+    setState(() {
+      isLoading = true;
+    });
+    QuerySnapshot snapshot = await postRef
+        .doc(currentuserId)
+        .collection('userPosts')
+        .orderBy('timestamp', descending: true)
+        .get();
+
+    setState(() {
+      isLoading = false;
+      postCount = snapshot.docs.length;
+      posts = snapshot.docs.map((doc) => Post.fromDocument(doc)).toList();
+
+      print(posts);
+    });
+  }
+
+  /// Count Column
   Column buildCountColumn(String label, int count) {
     return Column(
       children: <Widget>[
@@ -39,12 +64,13 @@ class _ProfileState extends State<Profile> {
     );
   }
 
+//// Profile builder
   buildProfileHeader() {
     return FutureBuilder(
       future: userRef.doc(widget.profileId).get(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
-          return circularProgress();
+          return linearProgress();
         }
         User user = User.fromDocument(snapshot.data);
 
@@ -78,7 +104,7 @@ class _ProfileState extends State<Profile> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: <Widget>[
-                  buildCountColumn("POSTS", 10),
+                  buildCountColumn("POSTS", postCount),
                   buildCountColumn("FOLLOWING", 2020),
                   buildCountColumn("FOLLOWERS", 2020),
                 ],
@@ -99,6 +125,24 @@ class _ProfileState extends State<Profile> {
         );
       },
     );
+  }
+
+  buildProfilePosts() {
+    if (isLoading) {
+      return circularProgress();
+    }
+
+    return Column(
+      children: posts,
+    );
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    print("Yashwant");
+    getProfilePosts();
   }
 
   @override
@@ -148,7 +192,10 @@ class _ProfileState extends State<Profile> {
                 ),
         ],
       ),
-      body: ListView(children: <Widget>[buildProfileHeader()]),
+      body: ListView(children: <Widget>[
+        buildProfileHeader(),
+        buildProfilePosts(),
+      ]),
     );
   }
 }

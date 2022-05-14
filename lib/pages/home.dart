@@ -93,7 +93,7 @@ class _HomeState extends State<Home> {
           context, MaterialPageRoute(builder: (context) => CreateAccount()));
 
       // 3) get username from create account, use it to make new user document in users collection
-      usersRef.doc(user.id).set({
+      userRef.doc(user.id).set({
         "id": user.id,
         "username": username,
         "photoUrl": user.photoUrl,
@@ -104,10 +104,7 @@ class _HomeState extends State<Home> {
       });
       doc = await userRef.doc(user.id).get();
     }
-
     currentUser = User.fromDocument(doc);
-    print(currentUser);
-    print(currentUser.username);
   }
 
   onPageChanged(int pageIndex) {
