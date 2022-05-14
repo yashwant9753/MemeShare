@@ -34,22 +34,30 @@ class _SearchState extends State<Search> {
 
   AppBar buildSearchField() {
     return AppBar(
+      shadowColor: Colors.white,
       backgroundColor: Colors.white,
-      title: TextFormField(
-        controller: searchController,
-        decoration: InputDecoration(
-          hintText: "Search for a user...",
-          filled: true,
-          prefixIcon: Icon(
-            Icons.account_box,
-            size: 28.0,
+      title: Container(
+        padding: EdgeInsets.only(top: 5),
+        height: 40,
+        alignment: Alignment.center,
+        child: TextFormField(
+          controller: searchController,
+          decoration: InputDecoration(
+            border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(18),
+                borderSide: BorderSide(width: 0)),
+            hintText: "Search for a user...",
+            prefixIcon: Icon(
+              Icons.account_box,
+              size: 28.0,
+            ),
+            suffixIcon: IconButton(
+              icon: Icon(Icons.clear),
+              onPressed: clearSearch,
+            ),
           ),
-          suffixIcon: IconButton(
-            icon: Icon(Icons.clear),
-            onPressed: clearSearch,
-          ),
+          onFieldSubmitted: handleSearch,
         ),
-        onFieldSubmitted: handleSearch,
       ),
     );
   }
@@ -65,10 +73,10 @@ class _SearchState extends State<Search> {
               "Find Users",
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: Colors.white,
+                color: Colors.grey,
                 fontStyle: FontStyle.italic,
                 fontWeight: FontWeight.w600,
-                fontSize: 60.0,
+                fontSize: 40.0,
               ),
             ),
           ],

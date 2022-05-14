@@ -138,29 +138,30 @@ class _HomeState extends State<Home> {
           ),
           // ActivityFeed(),
           // Profile()
-          PickFile()
+          PickFile(),
+          Profile(profileId: currentUser?.id)
         ],
         controller: pageController,
         onPageChanged: onPageChanged,
         physics: NeverScrollableScrollPhysics(),
       ),
       bottomNavigationBar: CupertinoTabBar(
-        backgroundColor: NetworkColors.colorDarkBlue,
-        height: 70,
+        backgroundColor: Colors.white,
+        height: 50,
         currentIndex: pageIndex,
         onTap: onTap,
-        inactiveColor: NetworkColors.colorBlack,
-        activeColor: NetworkColors.colorAccentWhite,
+        inactiveColor: NetworkColors.colorGrey,
+        activeColor: NetworkColors.colorBlack,
         items: [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home),
+            icon: Icon(Icons.home_sharp),
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.search),
+            icon: Icon(Icons.search_sharp),
           ),
           BottomNavigationBarItem(
               icon: Icon(
-            Icons.add_a_photo,
+            Icons.add_a_photo_outlined,
             size: 40,
           )),
           BottomNavigationBarItem(
@@ -168,17 +169,11 @@ class _HomeState extends State<Home> {
           ),
           BottomNavigationBarItem(
               icon: Icon(
-            Icons.account_circle,
+            Icons.account_circle_outlined,
           )),
         ],
       ),
     );
-    // return RaisedButton(
-    //   onPressed: () {
-    //     logout();
-    //   },
-    //   child: Text("Logout"),
-    // );
   }
 
   Scaffold buildUnAuthScreen() {
@@ -208,7 +203,7 @@ class _HomeState extends State<Home> {
                 height: 10,
               ),
               GestureDetector(
-                onTap: () {
+                onTap: () async {
                   login();
                 },
                 child: Container(
