@@ -6,6 +6,6 @@ class NetworkColors {
 
   static const Color colorAccentWhite = Color.fromARGB(255, 255, 255, 255);
 
-  static const Color colorBackground = Color(0xFFFBFAFF);
-  static const Color colorGrey = Color.fromARGB(255, 145, 143, 150);
+  static const Color colorBackground = Color.fromARGB(255, 223, 221, 227);
+  static const Color colorGrey = Color.fromARGB(255, 176, 173, 180);
 }

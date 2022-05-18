@@ -37,14 +37,14 @@ class _SearchState extends State<Search> {
       shadowColor: Colors.white,
       backgroundColor: Colors.white,
       title: Container(
-        padding: EdgeInsets.only(top: 5),
-        height: 40,
+        // padding: EdgeInsets.only(top: 5),
+        height: 50,
         alignment: Alignment.center,
         child: TextFormField(
           controller: searchController,
           decoration: InputDecoration(
             border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(18),
+                borderRadius: BorderRadius.circular(30),
                 borderSide: BorderSide(width: 0)),
             hintText: "Search for a user...",
             prefixIcon: Icon(

@@ -233,16 +233,27 @@ class _UploadState extends State<Upload> {
       body: ListView(
         children: <Widget>[
           isUploading ? linearProgress() : Text(""),
-          Container(
-            height: 220.0,
-            width: MediaQuery.of(context).size.width * 0.8,
-            child: Center(
-              child: AspectRatio(
-                aspectRatio: 16 / 9,
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(15),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey,
+                    blurRadius: 1.0,
+                    offset: Offset(0, 1),
+                    spreadRadius: 0.5,
+                  ),
+                ],
+              ),
+              height: 220.0,
+              width: MediaQuery.of(context).size.width * 0.8,
+              child: Center(
                 child: Container(
                   decoration: BoxDecoration(
                     image: DecorationImage(
-                      fit: BoxFit.cover,
                       image: FileImage(image),
                     ),
                   ),
@@ -262,7 +273,7 @@ class _UploadState extends State<Upload> {
               child: TextField(
                 controller: captionController,
                 decoration: InputDecoration(
-                  hintText: "Write a caption...",
+                  hintText: "What do you think...",
                   border: InputBorder.none,
                 ),
               ),

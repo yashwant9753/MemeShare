@@ -6,6 +6,7 @@ import 'package:socialnetwork/pages/edit_profile.dart';
 import 'package:socialnetwork/pages/home.dart';
 import 'package:socialnetwork/widgets/header.dart';
 import 'package:socialnetwork/widgets/post.dart';
+import 'package:socialnetwork/widgets/post_tile.dart';
 import 'package:socialnetwork/widgets/progress.dart';
 
 class Profile extends StatefulWidget {
@@ -20,6 +21,7 @@ class Profile extends StatefulWidget {
 class _ProfileState extends State<Profile> {
   final String currentuserId = currentUser?.id;
   bool isLoading = false;
+  String postOrientation = "grid";
   int postCount = 0;
   List<Post> posts = [];
 
@@ -37,8 +39,6 @@ class _ProfileState extends State<Profile> {
       isLoading = false;
       postCount = snapshot.docs.length;
       posts = snapshot.docs.map((doc) => Post.fromDocument(doc)).toList();
-
-      print(posts);
     });
   }
 
@@ -104,7 +104,7 @@ class _ProfileState extends State<Profile> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: <Widget>[
-                  buildCountColumn("POSTS", postCount),
+                  buildCountColumn("Memes", postCount),
                   buildCountColumn("FOLLOWING", 2020),
                   buildCountColumn("FOLLOWERS", 2020),
                 ],
@@ -119,7 +119,8 @@ class _ProfileState extends State<Profile> {
               Divider(
                 height: 1,
                 color: Colors.grey,
-              )
+              ),
+              buildTogglePostOrientation(),
             ],
           ),
         );
@@ -130,11 +131,69 @@ class _ProfileState extends State<Profile> {
   buildProfilePosts() {
     if (isLoading) {
       return circularProgress();
+    } else if (posts.isEmpty) {
+      return Container(
+        child: Center(
+          child: ListView(
+            shrinkWrap: true,
+            children: <Widget>[
+              Text(
+                "No Meme",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.grey,
+                  fontStyle: FontStyle.italic,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 30.0,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    } else if (postOrientation == "grid") {
+      List<GridTile> gridTiles = [];
+      posts.forEach((post) {
+        gridTiles.add(GridTile(child: PostTile(post: post)));
+      });
+      return GridView.count(
+        crossAxisCount: 3,
+        childAspectRatio: 1.0,
+        mainAxisSpacing: 1.5,
+        crossAxisSpacing: 1.5,
+        shrinkWrap: true,
+        physics: NeverScrollableScrollPhysics(),
+        children: gridTiles,
+      );
+    } else if (postOrientation == "list") {
+      return Column(
+        children: posts,
+      );
     }
+  }
 
-    return Column(
-      children: posts,
+  buildTogglePostOrientation() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: <Widget>[
+        IconButton(
+          onPressed: () => setPostOrientation("grid"),
+          icon: Icon(Icons.picture_in_picture),
+          color: postOrientation == 'grid' ? Colors.black : Colors.grey,
+        ),
+        IconButton(
+          onPressed: () => setPostOrientation("list"),
+          icon: Icon(Icons.list_alt_outlined),
+          color: postOrientation == 'list' ? Colors.black : Colors.grey,
+        ),
+      ],
     );
+  }
+
+  setPostOrientation(String postOrientation) {
+    setState(() {
+      this.postOrientation = postOrientation;
+    });
   }
 
   @override

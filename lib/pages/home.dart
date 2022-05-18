@@ -16,14 +16,28 @@ import 'package:socialnetwork/pages/search.dart';
 import 'package:socialnetwork/pages/timeline.dart';
 import 'package:socialnetwork/pages/upload.dart';
 
+/// Google Signin Reference
 final GoogleSignIn googleSignIn = GoogleSignIn();
+
+/// Firebase FireStore user Reference
 final CollectionReference userRef =
     FirebaseFirestore.instance.collection("users");
+
+/// Firebase FireStore Post Reference
 final CollectionReference postRef =
     FirebaseFirestore.instance.collection("posts");
+
+/// Firebase FireStore comments  Reference
+final CollectionReference commentsRef =
+    FirebaseFirestore.instance.collection("comments");
+
+/// Firebase FireStore Reference
 final Reference storageRef = FirebaseStorage.instance.ref();
+
+///Current Date and Time
 final DateTime timeStamp = DateTime.now();
 
+///current user
 User currentUser;
 
 class Home extends StatefulWidget {
@@ -128,14 +142,18 @@ class _HomeState extends State<Home> {
             },
             child: Text("Logout"),
           ),
-          // TimeLine(),
+
+          /// Search Page
           Search(),
+
+          /// Upload Page
           Upload(
             currentUser: currentUser,
           ),
-          // ActivityFeed(),
-          // Profile()
+
           PickFile(),
+
+          /// User Profile Page
           Profile(profileId: currentUser?.id)
         ],
         controller: pageController,
@@ -151,14 +169,15 @@ class _HomeState extends State<Home> {
         activeColor: NetworkColors.colorBlack,
         items: [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home_sharp),
-          ),
+              icon: Icon(
+            Icons.home_sharp,
+          )),
           BottomNavigationBarItem(
             icon: Icon(Icons.search_sharp),
           ),
           BottomNavigationBarItem(
               icon: Icon(
-            Icons.add_a_photo_outlined,
+            Icons.add_a_photo_sharp,
             size: 40,
           )),
           BottomNavigationBarItem(
@@ -166,12 +185,14 @@ class _HomeState extends State<Home> {
           ),
           BottomNavigationBarItem(
               icon: Icon(
-            Icons.account_circle_outlined,
+            Icons.account_circle_sharp,
           )),
         ],
       ),
     );
   }
+
+  /// The Google SignIn Screen
 
   Scaffold buildUnAuthScreen() {
     return Scaffold(
