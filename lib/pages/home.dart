@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:socialnetwork/models/user.dart';
 import 'package:socialnetwork/networkColors.dart';
+import 'package:socialnetwork/pages/activity_feed.dart';
 import 'package:socialnetwork/pages/create_account.dart';
 import 'package:socialnetwork/pages/pickfile.dart';
 import 'package:socialnetwork/pages/profile.dart';
@@ -30,6 +31,10 @@ final CollectionReference postRef =
 /// Firebase FireStore comments  Reference
 final CollectionReference commentsRef =
     FirebaseFirestore.instance.collection("comments");
+
+/// Firebase FireStore activity   Reference
+final CollectionReference activityFeedRef =
+    FirebaseFirestore.instance.collection("feed");
 
 /// Firebase FireStore Reference
 final Reference storageRef = FirebaseStorage.instance.ref();
@@ -151,7 +156,8 @@ class _HomeState extends State<Home> {
             currentUser: currentUser,
           ),
 
-          PickFile(),
+          /// activityFeed Page
+          ActivityFeed(),
 
           /// User Profile Page
           Profile(profileId: currentUser?.id)

@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:socialnetwork/models/user.dart';
 import 'package:socialnetwork/networkColors.dart';
+import 'package:socialnetwork/pages/activity_feed.dart';
 import 'package:socialnetwork/pages/comments.dart';
 import 'package:socialnetwork/pages/home.dart';
 import 'package:socialnetwork/widgets/progress.dart';
@@ -101,6 +102,7 @@ class _PostState extends State<Post> {
           .collection('userPosts')
           .doc(postId)
           .update({'likes.$currentUserId': false});
+      removeLikeFromActivityFeed();
       setState(() {
         likeCount -= 1;
         isLiked = false;
@@ -112,6 +114,9 @@ class _PostState extends State<Post> {
           .collection('userPosts')
           .doc(postId)
           .update({'likes.$currentUserId': true});
+
+      /// add like to the Activity Feed
+      addLikeToActivityFeed();
       setState(() {
         likeCount += 1;
         isLiked = true;
@@ -122,6 +127,42 @@ class _PostState extends State<Post> {
         setState(() {
           showHeart = false;
         });
+      });
+    }
+  }
+
+  /// add like in activity Feed
+
+  addLikeToActivityFeed() {
+    /// to avoid getting notification fpr our own like
+    bool isNotPostOwner = currentUserId != ownerId;
+    if (isNotPostOwner) {
+      activityFeedRef.doc(ownerId).collection("feedItems").doc(postId).set({
+        "type": "like",
+        "username": currentUser.username,
+        "userId": currentUser.id,
+        "userProfileImg": currentUser.photoUrl,
+        "postId": postId,
+        "mediaUrl": mediaUrl,
+        "timestamp": timeStamp,
+      });
+    }
+  }
+
+  /// remove the like from Activity Feed
+  removeLikeFromActivityFeed() {
+    /// to avoid getting notification fpr our own like
+    bool isNotPostOwner = currentUserId != ownerId;
+    if (isNotPostOwner) {
+      activityFeedRef
+          .doc(ownerId)
+          .collection("feedItems")
+          .doc(postId)
+          .get()
+          .then((doc) {
+        if (doc.exists) {
+          doc.reference.delete();
+        }
       });
     }
   }
@@ -140,7 +181,9 @@ class _PostState extends State<Post> {
               backgroundImage: NetworkImage(user.photoUrl),
             ),
             title: GestureDetector(
-                onTap: () {},
+                onTap: () {
+                  showProfile(context, profileId: user.id);
+                },
                 child: Text(
                   user.username,
                   style: TextStyle(fontFamily: "Brand-Bold"),
@@ -214,13 +257,6 @@ class _PostState extends State<Post> {
                             ),
                           ))
                   : Text("")
-              // showHeart
-              //     ? Icon(
-              //         Icons.favorite,
-              //         size: 150,
-              //         color: NetworkColors.colorGrey,
-              //       )
-              //     : Text("")
             ],
           ),
         ]),

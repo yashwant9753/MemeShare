@@ -193,7 +193,7 @@ class _UploadState extends State<Upload> {
     setState(() {
       image = null;
       isUploading = false;
-      // postId = Uuid().v4(); Create new PostId
+      postId = Uuid().v4(); //Create new PostId
     });
   }
 
