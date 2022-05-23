@@ -19,18 +19,23 @@ class Profile extends StatefulWidget {
 }
 
 class _ProfileState extends State<Profile> {
-  final String currentuserId = currentUser?.id;
-  bool isLoading = false;
-  String postOrientation = "grid";
-  int postCount = 0;
-  List<Post> posts = [];
+  bool isFollowing = false; // default
+  final String currentuserId = currentUser?.id; // Assign Current user ID
+  bool isLoading = false; // Loading
+  String postOrientation = "grid"; // Orientation
+  int postCount = 0; // count the user post
+  List<Post> posts = []; // Fetch the user posts from post class
+
+  int followerCount = 0; // Number of followers
+  int followingCount = 0; // Number of Following
 
   getProfilePosts() async {
+    // Get Profile Id user All post and add into post list
     setState(() {
       isLoading = true;
     });
     QuerySnapshot snapshot = await postRef
-        .doc(currentuserId)
+        .doc(widget.profileId)
         .collection('userPosts')
         .orderBy('timestamp', descending: true)
         .get();
@@ -105,8 +110,8 @@ class _ProfileState extends State<Profile> {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: <Widget>[
                   buildCountColumn("Memes", postCount),
-                  buildCountColumn("FOLLOWING", 2020),
-                  buildCountColumn("FOLLOWERS", 2020),
+                  buildCountColumn("FOLLOWING", followingCount),
+                  buildCountColumn("FOLLOWERS", followerCount),
                 ],
               ),
               Container(
@@ -200,8 +205,193 @@ class _ProfileState extends State<Profile> {
   void initState() {
     // TODO: implement initState
     super.initState();
-    print("Yashwant");
+    getFollowers();
+    getFollowing();
+    checkIfFollowing();
     getProfilePosts();
+  }
+
+  getFollowers() async {
+    QuerySnapshot snapshot = await followersRef
+        .doc(widget.profileId)
+        .collection("userFollowers")
+        .get();
+
+    setState(() {
+      followerCount = snapshot.docs.length;
+    });
+  }
+
+  getFollowing() async {
+    QuerySnapshot snapshot = await followingRef
+        .doc(widget.profileId)
+        .collection("userFollowing")
+        .get();
+    setState(() {
+      followingCount = snapshot.docs.length;
+    });
+  }
+
+  checkIfFollowing() async {
+    DocumentSnapshot doc = await followersRef
+        .doc(widget.profileId)
+        .collection("userFollowers")
+        .doc(currentuserId)
+        .get();
+    setState(() {
+      isFollowing = doc.exists;
+    });
+  }
+
+  buildProfileButton() {
+    // build appbar action button
+    bool isprofileOwner = currentuserId == widget.profileId;
+
+    if (isprofileOwner) {
+      // for current user show edit iconButton
+      return Padding(
+        padding: const EdgeInsets.only(right: 15.0),
+        child: IconButton(
+          icon: Icon(Icons.edit_calendar_outlined),
+          onPressed: () {
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) =>
+                        EditProfile(currentUserId: currentuserId)));
+          },
+        ),
+      );
+    } else {
+      // and for other user follow or unfollow Button
+      return Container(
+          padding: EdgeInsets.all(8.0),
+          child: isFollowing
+              ? RaisedButton(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30.0),
+                  ),
+                  child: Text(
+                    "Unfollow",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 15.0,
+                    ),
+                  ),
+                  color: NetworkColors.colorDarkBlue,
+                  onPressed: () {
+                    handleUnfollowUser();
+                  },
+                )
+              : RaisedButton(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30.0),
+                  ),
+                  child: Text(
+                    "Follow",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 15.0,
+                    ),
+                  ),
+                  color: NetworkColors.colorDarkBlue,
+                  onPressed: () {
+                    handleFollowUser();
+                  },
+                ));
+    }
+  }
+
+  handleFollowUser() {
+    print("follow");
+    setState(() {
+      isFollowing = true;
+    });
+    // Make auth user follower of THAT user (update THEIR followers collection)
+    followersRef
+        .doc(widget.profileId)
+        .collection('userFollowers')
+        .doc(currentuserId)
+        .set({});
+    // Put THAT user on YOUR following collection (update your following collection)
+    followingRef
+        .doc(currentuserId)
+        .collection('userFollowing')
+        .doc(widget.profileId)
+        .set({});
+    // add activity feed item for that user to notify about new follower (us)
+    activityFeedRef
+        .doc(widget.profileId)
+        .collection('feedItems')
+        .doc(currentuserId)
+        .set({
+      "type": "follow",
+      "ownerId": widget.profileId,
+      "username": currentUser.username,
+      "userId": currentuserId,
+      "userProfileImg": currentUser.photoUrl,
+      "timestamp": timeStamp,
+    });
+  }
+
+  handleUnfollowUser() {
+    print("unfollow");
+    setState(() {
+      isFollowing = false;
+    });
+    // remove follower
+    followersRef
+        .doc(widget.profileId)
+        .collection('userFollowers')
+        .doc(currentuserId)
+        .get()
+        .then((doc) {
+      if (doc.exists) {
+        doc.reference.delete();
+      }
+    });
+    // remove following
+    followingRef
+        .doc(currentuserId)
+        .collection('userFollowing')
+        .doc(widget.profileId)
+        .get()
+        .then((doc) {
+      if (doc.exists) {
+        doc.reference.delete();
+      }
+    });
+    // delete activity feed item for them
+    activityFeedRef
+        .doc(widget.profileId)
+        .collection('feedItems')
+        .doc(currentuserId)
+        .get()
+        .then((doc) {
+      if (doc.exists) {
+        doc.reference.delete();
+      }
+    });
+  }
+
+  buildButton(String text, Function function) {
+    return RaisedButton(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8.0),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: Colors.white,
+          fontSize: 15.0,
+        ),
+      ),
+      color: NetworkColors.colorDarkBlue,
+      onPressed: () {
+        print("Function");
+        function;
+      },
+    );
   }
 
   @override
@@ -218,37 +408,7 @@ class _ProfileState extends State<Profile> {
               fontFamily: 'Brand-Bold', fontSize: 20.0, color: Colors.black),
         ),
         actions: [
-          currentuserId == widget.profileId
-              ? Padding(
-                  padding: const EdgeInsets.only(right: 15.0),
-                  child: IconButton(
-                    icon: Icon(Icons.edit_calendar_outlined),
-                    onPressed: () {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) =>
-                                  EditProfile(currentUserId: currentuserId)));
-                    },
-                  ),
-                )
-              : Container(
-                  padding: EdgeInsets.all(8.0),
-                  child: RaisedButton(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.0),
-                    ),
-                    child: Text(
-                      "Follow",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 15.0,
-                      ),
-                    ),
-                    color: NetworkColors.colorDarkBlue,
-                    onPressed: () {},
-                  ),
-                ),
+          buildProfileButton(),
         ],
       ),
       body: ListView(children: <Widget>[

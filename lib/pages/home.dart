@@ -11,9 +11,10 @@ import 'package:socialnetwork/models/user.dart';
 import 'package:socialnetwork/networkColors.dart';
 import 'package:socialnetwork/pages/activity_feed.dart';
 import 'package:socialnetwork/pages/create_account.dart';
-import 'package:socialnetwork/pages/pickfile.dart';
+
 import 'package:socialnetwork/pages/profile.dart';
 import 'package:socialnetwork/pages/search.dart';
+import 'package:socialnetwork/pages/testpage.dart';
 import 'package:socialnetwork/pages/timeline.dart';
 import 'package:socialnetwork/pages/upload.dart';
 
@@ -35,6 +36,14 @@ final CollectionReference commentsRef =
 /// Firebase FireStore activity   Reference
 final CollectionReference activityFeedRef =
     FirebaseFirestore.instance.collection("feed");
+
+/// Firebase FireStore follower   Reference
+final CollectionReference followersRef =
+    FirebaseFirestore.instance.collection("followers");
+
+/// Firebase FireStore following   Reference
+final CollectionReference followingRef =
+    FirebaseFirestore.instance.collection("following");
 
 /// Firebase FireStore Reference
 final Reference storageRef = FirebaseStorage.instance.ref();
@@ -160,7 +169,9 @@ class _HomeState extends State<Home> {
           ActivityFeed(),
 
           /// User Profile Page
-          Profile(profileId: currentUser?.id)
+          Profile(profileId: currentUser?.id),
+
+          TextPage()
         ],
         controller: pageController,
         onPageChanged: onPageChanged,
@@ -192,6 +203,10 @@ class _HomeState extends State<Home> {
           BottomNavigationBarItem(
               icon: Icon(
             Icons.account_circle_sharp,
+          )),
+          BottomNavigationBarItem(
+              icon: Icon(
+            Icons.explore,
           )),
         ],
       ),
