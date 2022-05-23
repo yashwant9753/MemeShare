@@ -2,7 +2,6 @@ const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 admin.initializeApp();
 
-
 // // Create and Deploy Your First Cloud Functions
 // // https://firebase.google.com/docs/functions/write-firebase-functions
 //
@@ -10,6 +9,7 @@ admin.initializeApp();
 //   functions.logger.info("Hello logs!", {structuredData: true});
 //   response.send("Hello from Firebase!");
 // });
+
 exports.onCreateFollower = functions.firestore
   .document("/followers/{userId}/userFollowers/{followerId}")
   .onCreate(async (snapshot, context) => {
@@ -40,6 +40,32 @@ exports.onCreateFollower = functions.firestore
         const postId = doc.id;
         const postData = doc.data();
         timelinePostsRef.doc(postId).set(postData);
+      }
+    });
+  });
+
+
+
+
+  exports.onDeleteFollower = functions.firestore
+  .document("/followers/{userId}/userFollowers/{followerId}")
+  .onDelete(async (snapshot, context) => {
+    console.log("Follower Deleted", snapshot.id);
+
+    const userId = context.params.userId;
+    const followerId = context.params.followerId;
+
+    const timelinePostsRef = admin
+      .firestore()
+      .collection("timeline")
+      .doc(followerId)
+      .collection("timelinePosts")
+      .where("ownerId", "==", userId);
+
+    const querySnapshot = await timelinePostsRef.get();
+    querySnapshot.forEach(doc => {
+      if (doc.exists) {
+        doc.ref.delete();
       }
     });
   });
