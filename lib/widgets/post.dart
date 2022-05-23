@@ -175,6 +175,8 @@ class _PostState extends State<Post> {
             return circularProgress();
           }
           User user = User.fromDocument(snapshot.data);
+
+          bool isPostOwner = currentUserId == ownerId;
           return ListTile(
             leading: CircleAvatar(
               backgroundColor: NetworkColors.colorGrey,
@@ -189,12 +191,72 @@ class _PostState extends State<Post> {
                   style: TextStyle(fontFamily: "Brand-Bold"),
                 )),
             subtitle: Text(location),
-            trailing: IconButton(
-              onPressed: () => print("deleting post"),
-              icon: Icon(Icons.more_vert),
-            ),
+            trailing: isPostOwner
+                ? IconButton(
+                    onPressed: () => handleDeletePost(context),
+                    icon: Icon(Icons.more_vert),
+                  )
+                : Text(""),
           );
         });
+  }
+
+  handleDeletePost(BuildContext parentContext) {
+    return showDialog(
+        context: parentContext,
+        builder: (context) {
+          return SimpleDialog(
+            title: Text('Remove this post ?'),
+            children: <Widget>[
+              SimpleDialogOption(
+                  child: Text("Delete"),
+                  onPressed: () {
+                    Navigator.pop(context);
+                    deletePost();
+                  }),
+              SimpleDialogOption(
+                child: Text("Cancel"),
+                onPressed: () => Navigator.pop(context),
+              )
+            ],
+          );
+        });
+  }
+
+// Note : to delete the post the currentuser id and owner id should be equal
+  deletePost() async {
+// delete the post itself
+
+    postRef.doc(ownerId).collection("userPosts").doc(postId).get().then((doc) {
+      if (doc.exists) {
+        doc.reference.delete();
+      }
+    });
+
+    // delete uploaded image from firebase storage
+    storageRef.child("post_$postId.jpg").delete();
+
+    QuerySnapshot activityFeedSnapshot = await activityFeedRef
+        .doc(ownerId)
+        .collection("feedItems")
+        .where('postId', isEqualTo: postId)
+        .get();
+    activityFeedSnapshot.docs.forEach((element) {
+      if (element.exists) {
+        element.reference.delete();
+      }
+    });
+
+    // then delete the comments
+
+    QuerySnapshot commentsSnapshot =
+        await commentsRef.doc(postId).collection("comments").get();
+
+    commentsSnapshot.docs.forEach((element) {
+      if (element.exists) {
+        element.reference.delete();
+      }
+    });
   }
 
   buildPostImage() {
