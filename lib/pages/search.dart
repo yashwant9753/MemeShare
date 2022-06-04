@@ -1,5 +1,7 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+
 import 'package:socialnetwork/models/user.dart';
 import 'package:socialnetwork/networkColors.dart';
 import 'package:socialnetwork/pages/activity_feed.dart';
@@ -11,21 +13,22 @@ class Search extends StatefulWidget {
   _SearchState createState() => _SearchState();
 }
 
-class _SearchState extends State<Search> {
+class _SearchState extends State<Search>
+    with AutomaticKeepAliveClientMixin<Search> {
   TextEditingController searchController = TextEditingController();
   Future<QuerySnapshot> searchResultsFuture;
 
+  FocusNode searchFocus;
+
   handleSearch(String query) {
-    print(query);
-    Future<QuerySnapshot> snapshot =
-        userRef.where("displayName", isGreaterThanOrEqualTo: query).get();
-    // snapshot.docs.forEach((element) {
-    //   print(element.data());
-    // });
-    // Future<QuerySnapshot> users =
-    //     userRef.where("displayName", isGreaterThanOrEqualTo: query).get();
+    Future<QuerySnapshot> users = usersRef
+        .where(
+          "username",
+          isGreaterThanOrEqualTo: query,
+        )
+        .get();
     setState(() {
-      searchResultsFuture = snapshot;
+      searchResultsFuture = users;
     });
   }
 
@@ -35,30 +38,27 @@ class _SearchState extends State<Search> {
 
   AppBar buildSearchField() {
     return AppBar(
-      shadowColor: Colors.white,
       backgroundColor: Colors.white,
-      title: Container(
-        // padding: EdgeInsets.only(top: 5),
-        height: 50,
-        alignment: Alignment.center,
-        child: TextFormField(
-          controller: searchController,
-          decoration: InputDecoration(
-            border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(30),
-                borderSide: BorderSide(width: 0)),
-            hintText: "Search for a user...",
-            prefixIcon: Icon(
-              Icons.account_box,
-              size: 28.0,
-            ),
-            suffixIcon: IconButton(
-              icon: Icon(Icons.clear),
-              onPressed: clearSearch,
-            ),
+      automaticallyImplyLeading: false,
+      title: TextFormField(
+        focusNode: searchFocus,
+        controller: searchController,
+        decoration: InputDecoration(
+          focusColor: NetworkColors.colorDarkBlue,
+          focusedBorder: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          hintText: "Search for a user...",
+          filled: true,
+          prefixIcon: Icon(
+            Icons.account_box,
+            size: 28.0,
           ),
-          onFieldSubmitted: handleSearch,
+          suffixIcon: IconButton(
+            icon: Icon(Icons.clear),
+            onPressed: clearSearch,
+          ),
         ),
+        onFieldSubmitted: handleSearch,
       ),
     );
   }
@@ -74,10 +74,10 @@ class _SearchState extends State<Search> {
               "Find Users",
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: Colors.grey,
+                color: NetworkColors.colorGrey,
                 fontStyle: FontStyle.italic,
                 fontWeight: FontWeight.w600,
-                fontSize: 40.0,
+                fontSize: 60.0,
               ),
             ),
           ],
@@ -96,8 +96,11 @@ class _SearchState extends State<Search> {
         List<UserResult> searchResults = [];
         snapshot.data.docs.forEach((doc) {
           User user = User.fromDocument(doc);
-          UserResult searchResult = UserResult(user);
-          searchResults.add(searchResult);
+          if (user.id == currentUser.id) {
+          } else {
+            UserResult searchResult = UserResult(user);
+            searchResults.add(searchResult);
+          }
         });
         return ListView(
           children: searchResults,
@@ -107,7 +110,16 @@ class _SearchState extends State<Search> {
   }
 
   @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    searchFocus = FocusNode();
+  }
+
+  bool get wantKeepAlive => true;
+  @override
   Widget build(BuildContext context) {
+    super.build(context);
     return Scaffold(
       appBar: buildSearchField(),
       body:
@@ -118,36 +130,35 @@ class _SearchState extends State<Search> {
 
 class UserResult extends StatelessWidget {
   final User user;
+
   UserResult(this.user);
+
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.grey.withOpacity(0.1),
       child: Column(
         children: <Widget>[
           GestureDetector(
-            onTap: () {
-              showProfile(context, profileId: user.id);
-            },
+            onTap: () => showProfile(context, profileId: user.id),
             child: ListTile(
               leading: CircleAvatar(
-                  backgroundColor: Colors.grey,
-                  backgroundImage: NetworkImage(user.photoUrl)),
+                backgroundColor: NetworkColors.colorGrey,
+                backgroundImage: CachedNetworkImageProvider(user.photoUrl),
+              ),
               title: Text(
                 user.displayName,
                 style:
                     TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
               ),
               subtitle: Text(
-                user.username,
-                style: TextStyle(color: Colors.black),
+                "@${user.username}",
+                style: TextStyle(
+                  color: NetworkColors.colorGrey,
+                ),
               ),
             ),
           ),
-          Divider(
-            height: 2.0,
-            color: Colors.black,
-          )
+          Divider(height: 2.0, color: Colors.black),
         ],
       ),
     );

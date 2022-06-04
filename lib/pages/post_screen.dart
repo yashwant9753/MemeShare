@@ -7,12 +7,13 @@ import 'package:socialnetwork/widgets/progress.dart';
 class PostScreen extends StatelessWidget {
   final String userId;
   final String postId;
+
   PostScreen({this.userId, this.postId});
 
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
-      future: postRef.doc(userId).collection('userPosts').doc(postId).get(),
+      future: postsRef.doc(userId).collection('userPosts').doc(postId).get(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
           return circularProgress();
@@ -20,12 +21,15 @@ class PostScreen extends StatelessWidget {
         Post post = Post.fromDocument(snapshot.data);
         return Center(
           child: Scaffold(
-            appBar: header(context, title: "Post"),
-            body: ListView(children: <Widget>[
-              Container(
-                child: post,
-              )
-            ]),
+            appBar: header(context,
+                titleText: post.description == "" ? "Post" : post.description),
+            body: ListView(
+              children: <Widget>[
+                Container(
+                  child: post,
+                )
+              ],
+            ),
           ),
         );
       },

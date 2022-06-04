@@ -1,6 +1,6 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:socialnetwork/networkColors.dart';
 import 'package:socialnetwork/pages/home.dart';
 import 'package:socialnetwork/widgets/header.dart';
 import 'package:socialnetwork/widgets/progress.dart';
@@ -9,49 +9,55 @@ import 'package:timeago/timeago.dart' as timeago;
 class Comments extends StatefulWidget {
   final String postId;
   final String postOwnerId;
-  final String postMedialUrl;
+  final String postMediaUrl;
 
-  Comments({this.postId, this.postMedialUrl, this.postOwnerId});
+  Comments({
+    this.postId,
+    this.postOwnerId,
+    this.postMediaUrl,
+  });
 
   @override
-  State<Comments> createState() => _CommentsState(
-      postId: this.postId,
-      postOwnerId: this.postOwnerId,
-      postMedialUrl: postMedialUrl);
+  CommentsState createState() => CommentsState(
+        postId: this.postId,
+        postOwnerId: this.postOwnerId,
+        postMediaUrl: this.postMediaUrl,
+      );
 }
 
-class _CommentsState extends State<Comments> {
+class CommentsState extends State<Comments> {
   TextEditingController commentController = TextEditingController();
   final String postId;
   final String postOwnerId;
-  final String postMedialUrl;
+  final String postMediaUrl;
 
-  _CommentsState({this.postId, this.postMedialUrl, this.postOwnerId});
+  CommentsState({
+    this.postId,
+    this.postOwnerId,
+    this.postMediaUrl,
+  });
 
-  /// fetchin data from comments collection and Create comment list in realtime
   buildComments() {
     return StreamBuilder(
-      stream: commentsRef
-          .doc(postId)
-          .collection('comments')
-          .orderBy('timestamp')
-          .snapshots(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-          return circularProgress();
-        }
-        List<Comment> comments = [];
-        snapshot.data.docs.forEach((doc) {
-          comments.add(Comment.fromDocument(doc));
+        stream: commentsRef
+            .doc(postId)
+            .collection('comments')
+            .orderBy("timestamp", descending: false)
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return circularProgress();
+          }
+          List<Comment> comments = [];
+          snapshot.data.docs.forEach((doc) {
+            comments.add(Comment.fromDocument(doc));
+          });
+          return ListView(
+            children: comments,
+          );
         });
-        return ListView(
-          children: comments,
-        );
-      },
-    );
   }
 
-  /// adding data in "comments" collection
   addComment() {
     commentsRef.doc(postId).collection("comments").add({
       "username": currentUser.username,
@@ -60,19 +66,17 @@ class _CommentsState extends State<Comments> {
       "avatarUrl": currentUser.photoUrl,
       "userId": currentUser.id,
     });
-
     bool isNotPostOwner = postOwnerId != currentUser.id;
-
     if (isNotPostOwner) {
       activityFeedRef.doc(postOwnerId).collection('feedItems').add({
         "type": "comment",
         "commentData": commentController.text,
-        "username": currentUser.username,
-        "userId": currentUser.id,
-        "userProfileImg": currentUser.photoUrl,
-        "postId": postId,
-        "mediaUrl": postMedialUrl,
         "timestamp": timeStamp,
+        "postId": postId,
+        "userId": currentUser.id,
+        "username": currentUser.username,
+        "userProfileImg": currentUser.photoUrl,
+        "mediaUrl": postMediaUrl,
       });
     }
     commentController.clear();
@@ -81,14 +85,14 @@ class _CommentsState extends State<Comments> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: header(context, title: "Comments"),
+        appBar: header(context, titleText: "Comments"),
 
         /// header
         floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
         floatingActionButton: Container(
           color: Colors.white,
           margin: EdgeInsets.all(8.0),
-          height: 60,
+          height: 55,
 
           /// TextField
           child: TextFormField(
@@ -122,8 +126,6 @@ class _CommentsState extends State<Comments> {
   }
 }
 
-/// Creating a ListTile for user Comments
-
 class Comment extends StatelessWidget {
   final String username;
   final String userId;
@@ -139,7 +141,6 @@ class Comment extends StatelessWidget {
     this.timestamp,
   });
 
-  /// Fetching users data from 'comments' collection
   factory Comment.fromDocument(DocumentSnapshot doc) {
     return Comment(
       username: doc['username'],
@@ -157,7 +158,7 @@ class Comment extends StatelessWidget {
         ListTile(
           title: Text(comment),
           leading: CircleAvatar(
-            backgroundImage: NetworkImage(avatarUrl),
+            backgroundImage: CachedNetworkImageProvider(avatarUrl),
           ),
           subtitle: Text(timeago.format(timestamp.toDate())),
         ),

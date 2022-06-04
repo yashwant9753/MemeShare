@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
 
-//// header function
-AppBar header(context, {String title, removeBackButton = false}) {
+AppBar header(context,
+    {bool isAppTitle = false,
+    String titleText,
+    removeBackButton = false,
+    titleCenter = true}) {
   return AppBar(
     automaticallyImplyLeading: removeBackButton ? false : true,
-    centerTitle: true,
     backgroundColor: Colors.white,
     foregroundColor: Colors.black,
-    shadowColor: Colors.white70,
     title: Text(
-      title,
-      overflow: TextOverflow.ellipsis,
+      isAppTitle ? "MemeShare" : titleText,
       style: TextStyle(
           fontFamily: 'Brand-Bold', fontSize: 20.0, color: Colors.black),
+      overflow: TextOverflow.ellipsis,
     ),
+    centerTitle: titleCenter,
   );
 }

@@ -1,7 +1,6 @@
-import 'dart:async';
-
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/material.dart';
+import "package:flutter/material.dart";
 import 'package:socialnetwork/models/user.dart';
 import 'package:socialnetwork/networkColors.dart';
 import 'package:socialnetwork/pages/home.dart';
@@ -36,7 +35,7 @@ class _EditProfileState extends State<EditProfile> {
     setState(() {
       isLoading = true;
     });
-    DocumentSnapshot doc = await userRef.doc(widget.currentUserId).get();
+    DocumentSnapshot doc = await usersRef.doc(widget.currentUserId).get();
     user = User.fromDocument(doc);
     displayNameController.text = user.displayName;
     bioController.text = user.bio;
@@ -98,7 +97,7 @@ class _EditProfileState extends State<EditProfile> {
           : _bioValid = true;
     });
     if (_displayNameValid && _bioValid) {
-      userRef.doc(widget.currentUserId).update({
+      usersRef.doc(widget.currentUserId).update({
         "displayName": displayNameController.text,
         "bio": bioController.text
       });

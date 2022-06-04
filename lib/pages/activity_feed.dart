@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:socialnetwork/pages/home.dart';
@@ -31,7 +32,7 @@ class _ActivityFeedState extends State<ActivityFeed> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: header(context, title: "Activity Feed"),
+      appBar: header(context, titleText: "Activity Feed"),
       body: Container(
           child: FutureBuilder(
         future: getActivityFeed(),
@@ -48,8 +49,8 @@ class _ActivityFeedState extends State<ActivityFeed> {
   }
 }
 
-Widget mediaPreview; // Post media Preview
-String activityItemText; // Show type of notifications
+Widget mediaPreview;
+String activityItemText;
 
 class ActivityFeedItem extends StatelessWidget {
   final String username;
@@ -84,11 +85,17 @@ class ActivityFeedItem extends StatelessWidget {
       mediaUrl: doc['mediaUrl'],
     );
   }
+
   showPost(context) {
     Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (context) => PostScreen(postId: postId, userId: userId)));
+      context,
+      MaterialPageRoute(
+        builder: (context) => PostScreen(
+          postId: postId,
+          userId: currentUser.id,
+        ),
+      ),
+    );
   }
 
   configureMediaPreview(context) {
@@ -104,7 +111,7 @@ class ActivityFeedItem extends StatelessWidget {
                 decoration: BoxDecoration(
                   image: DecorationImage(
                     fit: BoxFit.cover,
-                    image: NetworkImage(mediaUrl),
+                    image: CachedNetworkImageProvider(mediaUrl),
                   ),
                 ),
               )),
@@ -119,7 +126,7 @@ class ActivityFeedItem extends StatelessWidget {
     } else if (type == 'follow') {
       activityItemText = "is following you";
     } else if (type == 'comment') {
-      activityItemText = 'Commented: $commentData';
+      activityItemText = 'replied: $commentData';
     } else {
       activityItemText = "Error: Unknown type '$type'";
     }
@@ -145,7 +152,7 @@ class ActivityFeedItem extends StatelessWidget {
                   ),
                   children: [
                     TextSpan(
-                      text: username,
+                      text: "$username",
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                     TextSpan(
@@ -155,10 +162,10 @@ class ActivityFeedItem extends StatelessWidget {
             ),
           ),
           leading: CircleAvatar(
-            backgroundImage: NetworkImage(userProfileImg),
+            backgroundImage: CachedNetworkImageProvider(userProfileImg),
           ),
           subtitle: Text(
-            "${timeago.format(timestamp.toDate())}",
+            timeago.format(timestamp.toDate()),
             overflow: TextOverflow.ellipsis,
           ),
           trailing: mediaPreview,

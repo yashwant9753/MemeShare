@@ -4,6 +4,8 @@ import 'package:socialnetwork/models/user.dart';
 import 'package:socialnetwork/networkColors.dart';
 import 'package:socialnetwork/pages/edit_profile.dart';
 import 'package:socialnetwork/pages/home.dart';
+import 'package:socialnetwork/pages/show_followers.dart';
+import 'package:socialnetwork/pages/show_followings.dart';
 import 'package:socialnetwork/widgets/header.dart';
 import 'package:socialnetwork/widgets/post.dart';
 import 'package:socialnetwork/widgets/post_tile.dart';
@@ -34,7 +36,7 @@ class _ProfileState extends State<Profile> {
     setState(() {
       isLoading = true;
     });
-    QuerySnapshot snapshot = await postRef
+    QuerySnapshot snapshot = await postsRef
         .doc(widget.profileId)
         .collection('userPosts')
         .orderBy('timestamp', descending: true)
@@ -72,7 +74,7 @@ class _ProfileState extends State<Profile> {
 //// Profile builder
   buildProfileHeader() {
     return FutureBuilder(
-      future: userRef.doc(widget.profileId).get(),
+      future: usersRef.doc(widget.profileId).get(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
           return linearProgress();
@@ -84,10 +86,18 @@ class _ProfileState extends State<Profile> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CircleAvatar(
-                radius: 50.0,
-                backgroundColor: Colors.grey,
-                backgroundImage: NetworkImage(user.photoUrl),
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: NetworkColors.colorDarkBlue,
+                  ),
+                  borderRadius: BorderRadius.all(Radius.circular(50)),
+                ),
+                child: CircleAvatar(
+                  radius: 50.0,
+                  backgroundColor: Colors.grey,
+                  backgroundImage: NetworkImage(user.photoUrl),
+                ),
               ),
               SizedBox(
                 height: 10,
@@ -110,8 +120,69 @@ class _ProfileState extends State<Profile> {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: <Widget>[
                   buildCountColumn("Memes", postCount),
-                  buildCountColumn("FOLLOWING", followingCount),
-                  buildCountColumn("FOLLOWERS", followerCount),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => ShowFollowings(
+                                  currentUser: widget.profileId,
+                                  followercCount: followingCount,
+                                )),
+                      );
+                    },
+                    child: Column(
+                      children: <Widget>[
+                        Text(
+                          "Following",
+                          style: TextStyle(
+                              fontFamily: "Brand-Regular",
+                              fontWeight: FontWeight.normal,
+                              color: Colors.grey),
+                        ),
+                        SizedBox(
+                          height: 5,
+                        ),
+                        Text(
+                          '$followerCount',
+                          style:
+                              TextStyle(fontFamily: "Brand-Bold", fontSize: 14),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // buildCountColumn("FOLLOWERS", followerCount),/
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => ShowFollowers(
+                                  currentUser: widget.profileId,
+                                  followercCount: followerCount,
+                                )),
+                      );
+                    },
+                    child: Column(
+                      children: <Widget>[
+                        Text(
+                          "Follower",
+                          style: TextStyle(
+                              fontFamily: "Brand-Regular",
+                              fontWeight: FontWeight.normal,
+                              color: Colors.grey),
+                        ),
+                        SizedBox(
+                          height: 5,
+                        ),
+                        Text(
+                          '$followerCount',
+                          style:
+                              TextStyle(fontFamily: "Brand-Bold", fontSize: 14),
+                        ),
+                      ],
+                    ),
+                  )
                 ],
               ),
               Container(
@@ -138,28 +209,26 @@ class _ProfileState extends State<Profile> {
       return circularProgress();
     } else if (posts.isEmpty) {
       return Container(
-        child: Center(
-          child: ListView(
-            shrinkWrap: true,
-            children: <Widget>[
-              Text(
-                "No Meme",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.grey,
-                  fontStyle: FontStyle.italic,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 30.0,
-                ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Text(
+              "No Meme",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.grey,
+                fontStyle: FontStyle.italic,
+                fontWeight: FontWeight.w600,
+                fontSize: 30.0,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       );
     } else if (postOrientation == "grid") {
       List<GridTile> gridTiles = [];
       posts.forEach((post) {
-        gridTiles.add(GridTile(child: PostTile(post: post)));
+        gridTiles.add(GridTile(child: PostTile(post)));
       });
       return GridView.count(
         crossAxisCount: 3,
@@ -303,7 +372,6 @@ class _ProfileState extends State<Profile> {
   }
 
   handleFollowUser() {
-    print("follow");
     setState(() {
       isFollowing = true;
     });
@@ -328,6 +396,9 @@ class _ProfileState extends State<Profile> {
       "type": "follow",
       "ownerId": widget.profileId,
       "username": currentUser.username,
+      "postId": "",
+      "commentData": "",
+      "mediaUrl": "",
       "userId": currentuserId,
       "userProfileImg": currentUser.photoUrl,
       "timestamp": timeStamp,
@@ -335,7 +406,6 @@ class _ProfileState extends State<Profile> {
   }
 
   handleUnfollowUser() {
-    print("unfollow");
     setState(() {
       isFollowing = false;
     });
@@ -388,8 +458,40 @@ class _ProfileState extends State<Profile> {
       ),
       color: NetworkColors.colorDarkBlue,
       onPressed: () {
-        print("Function");
         function;
+      },
+    );
+  }
+
+  logout() async {
+    await googleSignIn.signOut();
+    Navigator.push(context, MaterialPageRoute(builder: (context) => Home()));
+  }
+
+  logoutOption(parentContext) {
+    return showDialog(
+      context: parentContext,
+      builder: (context) {
+        return SimpleDialog(
+          title: Text("Logout from MemeShare"),
+          children: <Widget>[
+            SimpleDialogOption(
+                child: Text(
+                  "Logout",
+                  style: TextStyle(fontSize: 17),
+                ),
+                onPressed: () {
+                  logout();
+                }),
+            SimpleDialogOption(
+              child: Text(
+                "Cancel",
+                style: TextStyle(fontSize: 17),
+              ),
+              onPressed: () => Navigator.pop(context),
+            )
+          ],
+        );
       },
     );
   }
@@ -398,6 +500,17 @@ class _ProfileState extends State<Profile> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: currentuserId == widget.profileId
+            ? IconButton(
+                icon: Icon(Icons.logout, color: Colors.red),
+                onPressed: () {
+                  logoutOption(context);
+                })
+            : IconButton(
+                icon: Icon(Icons.arrow_back, color: Colors.black),
+                onPressed: () {
+                  Navigator.pop(context);
+                }),
         centerTitle: true,
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,

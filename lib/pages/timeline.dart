@@ -1,157 +1,162 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:socialnetwork/models/user.dart';
+import 'package:socialnetwork/networkColors.dart';
+import 'package:socialnetwork/pages/home.dart';
+import 'package:socialnetwork/pages/profile.dart';
+import 'package:socialnetwork/pages/search.dart';
 import 'package:socialnetwork/widgets/header.dart';
+import 'package:socialnetwork/widgets/post.dart';
 import 'package:socialnetwork/widgets/progress.dart';
-import 'package:firebase_core/firebase_core.dart';
 
-final CollectionReference usersRef =
-    FirebaseFirestore.instance.collection('users');
+class Timeline extends StatefulWidget {
+  final User currentUser;
 
-class TimeLine extends StatefulWidget {
-  const TimeLine({Key key}) : super(key: key);
+  Timeline({this.currentUser});
 
   @override
-  State<TimeLine> createState() => _TimeLineState();
+  _TimelineState createState() => _TimelineState();
 }
 
-class _TimeLineState extends State<TimeLine> {
-  // List<dynamic> users = [];                                      1
+class _TimelineState extends State<Timeline> {
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
+  List<Post> posts;
+  List<String> followingList = [];
 
   @override
   void initState() {
-    // TODO: implement initState
-
-    // getUsers();
-    // getUserByDocId();
-    // createUser();
-    // updateUser();
-    // deleteUser();
     super.initState();
+    getTimeline();
+    getFollowing();
+  }
+
+  getTimeline() async {
+    QuerySnapshot snapshot = await timelinRef
+        .doc(widget.currentUser.id)
+        .collection('timelinePosts')
+        .orderBy('timestamp', descending: true)
+        .get();
+    List<Post> posts =
+        snapshot.docs.map((doc) => Post.fromDocument(doc)).toList();
+    setState(() {
+      this.posts = posts;
+    });
+  }
+
+  getFollowing() async {
+    QuerySnapshot snapshot = await followingRef
+        .doc(currentUser.id)
+        .collection('userFollowing')
+        .get();
+    setState(() {
+      followingList = snapshot.docs.map((doc) => doc.id).toList();
+    });
+  }
+
+  buildTimeline() {
+    if (posts == null) {
+      return circularProgress();
+    } else if (posts.isEmpty) {
+      return buildUsersToFollow();
+    } else {
+      return ListView(children: posts);
+    }
+  }
+
+  buildUsersToFollow() {
+    return StreamBuilder(
+      stream:
+          usersRef.orderBy('timestamp', descending: true).limit(30).snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return circularProgress();
+        }
+        List<UserResult> userResults = [];
+        snapshot.data.docs.forEach((doc) {
+          User user = User.fromDocument(doc);
+          final bool isAuthUser = currentUser.id == user.id;
+          final bool isFollowingUser = followingList.contains(user.id);
+          // remove auth user from recommended list
+          if (isAuthUser) {
+            return;
+          } else if (isFollowingUser) {
+            return;
+          } else {
+            UserResult userResult = UserResult(user);
+            userResults.add(userResult);
+          }
+        });
+        return Container(
+          child: Column(
+            children: <Widget>[
+              Container(
+                padding: EdgeInsets.all(8),
+                child: Row(
+                  children: <Widget>[
+                    Text(
+                      "Suggestions",
+                      style: TextStyle(
+                          fontSize: 18.0,
+                          fontFamily: 'Brand-Regular',
+                          fontWeight: FontWeight.normal),
+                    ),
+                  ],
+                ),
+              ),
+              Divider(
+                height: 1,
+                color: NetworkColors.colorBlack,
+              ),
+              Column(children: userResults),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
-  Widget build(BuildContext context) {
+  void dispose() {
+    // TODO: implement dispose
+    super.dispose();
+  }
+
+  @override
+  Widget build(context) {
     return Scaffold(
-      appBar: header("MemeShare"),
-      body: StreamBuilder<QuerySnapshot>(
-          // Realtime data patch
-          stream: usersRef.snapshots(),
-          builder: (context, snapshot) {
-            if (!snapshot.hasData) {
-              return circularProgress();
-            }
-            final List<Text> children =
-                snapshot.data.docs.map((doc) => Text(doc["name"])).toList();
-
-            return Container(
-              child: ListView(children: children),
-            );
-          }),
-
-      // body: FutureBuilder<QuerySnapshot>(                 //future doesn't collect data in RealTime
-      //   future: usersRef.get(),
-      //   builder: (context, snapshot) {
-      //     if (!snapshot.hasData) {
-      //       return circularProgress();
-      //     }
-      //     final List<Text> children =
-      //         snapshot.data.docs.map((doc) => Text(doc['name'])).toList();
-
-      //     return Container(
-      //       child: ListView(
-      //         children: children,
-      //       ),
-      //     );
-      //   },
-      // )
-
-      // Container(                                                        1
-      //   child: ListView(
-      //     children: users.map((user) => Text(user["name"])).toList(),
-      //   ),
-      // )
-    );
+        key: _scaffoldKey,
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black,
+          title: Text(
+            "MemeShare",
+            style: TextStyle(
+                fontFamily: 'Brand-Bold', fontSize: 20.0, color: Colors.black),
+            overflow: TextOverflow.ellipsis,
+          ),
+          actions: [
+            GestureDetector(
+              onTap: () {},
+              child: Container(
+                padding: EdgeInsets.all(8.0),
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: NetworkColors.colorDarkBlue,
+                    ),
+                    borderRadius: BorderRadius.all(Radius.circular(20)),
+                  ),
+                  child: CircleAvatar(
+                    backgroundColor: Colors.grey,
+                    backgroundImage: NetworkImage(user.photoUrl),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+        body: RefreshIndicator(
+            onRefresh: () => getTimeline(), child: buildTimeline()));
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/////*****Create Delete Update retrieve Data Query ********////////
-
-
-
-// createUser() {
-  //   usersRef
-  //       .doc("dwadawd")
-  //       .set({"name": "Jeff", "postcount": 0, "isAdmin": "True"});
-    // usersRef.add({
-
-    //   "name": "Jeff",
-    //   "postcount":0,
-    //   "isAdmin":"True"
-    // });
-  // }
-
-  // updateUser() async {
-  //   final DocumentSnapshot doc =
-  //       await usersRef.doc("4tii7h8NRG4thGZNMeOc").get();
-  //   print(doc);
-  //   if (doc.exists) {
-  //     doc.reference.update({"name": "John", "postcount": 2, "isAdmin": "True"});
-  //   }
-  // }
-
-  // deleteUser() async {
-  //   final DocumentSnapshot doc = await usersRef.doc("dwadawd").get();
-  //   if (doc.exists) {
-  //     doc.reference.delete();
-  //   }
-  // }
-
-  // getUsers() async {
-  //   final QuerySnapshot snapshot = await usersRef.get();
-    // setState(() {                                                1
-    //   users = snapshot.docs;
-    // });
-    // final QuerySnapshot snapshot = await usersRef
-    //     // .where("isAdmin", isEqualTo: "True")
-    //     // .where("postcount", isEqualTo: 2)
-    //     // .orderBy("postcount", descending: true)
-    //     .limit(1)
-    //     .get();
-
-    // snapshot.docs.forEach((element) {
-    //   print(element.data());
-    // });
-
-    // usersRef.get().then((snapshot) {
-    //   snapshot.docs.forEach((doc) {
-    //     print(doc.data());
-    //     print(doc.id);
-    //     print(doc.exists);
-    //   });
-    // });
-  // }
-
-  // getUserByDocId() async {
-  //   final String id = "kZoIJw9CgfRNdMOD7u6Q";
-  //   final DocumentSnapshot doc = await usersRef.doc(id).get();
-  //   print(doc.data());
-  //   print(doc.id);
-  //   print(doc.exists);
-  // }

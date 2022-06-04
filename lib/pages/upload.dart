@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -29,7 +30,8 @@ class Upload extends StatefulWidget {
   _UploadState createState() => _UploadState();
 }
 
-class _UploadState extends State<Upload> {
+class _UploadState extends State<Upload>
+    with AutomaticKeepAliveClientMixin<Upload> {
   ///    file from devices
   XFile file;
 
@@ -164,7 +166,11 @@ class _UploadState extends State<Upload> {
       {String mediaUrl,
       String location,
       String description}) {
-    postRef.doc(widget.currentUser.id).collection("userPosts").doc(postId).set({
+    postsRef
+        .doc(widget.currentUser.id)
+        .collection("userPosts")
+        .doc(postId)
+        .set({
       "postId": postId,
       "ownerId": widget.currentUser.id,
       "username": widget.currentUser.username,
@@ -215,7 +221,7 @@ class _UploadState extends State<Upload> {
             padding: EdgeInsets.all(8.0),
             child: RaisedButton(
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8.0),
+                borderRadius: BorderRadius.circular(30.0),
               ),
               child: Text(
                 "Post",
@@ -359,9 +365,12 @@ class _UploadState extends State<Upload> {
     locationController.text = formattedAddress;
   }
 
+  bool get wantKeepAlive => true;
+
   @override
   Widget build(BuildContext context) {
     //// Widget Management
+    super.build(context); // for the AutomaticKeepAliveClientMixin
     return image == null ? buildSplashScreen() : buildUploadForm();
   }
 }
