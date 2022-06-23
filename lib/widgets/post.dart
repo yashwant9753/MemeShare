@@ -83,6 +83,7 @@ class _PostState extends State<Post> {
   bool isLiked;
   int likeCount;
   Map likes;
+  bool isFollowing;
 
   _PostState({
     this.postId,
@@ -95,6 +96,79 @@ class _PostState extends State<Post> {
     this.likeCount,
   });
 
+  handleFollowUser() {
+    setState(() {
+      isFollowing = true;
+    });
+    // Make auth user follower of THAT user (update THEIR followers collection)
+    followersRef
+        .doc(ownerId)
+        .collection('userFollowers')
+        .doc(currentUserId)
+        .set({});
+    // Put THAT user on YOUR following collection (update your following collection)
+    followingRef
+        .doc(currentUserId)
+        .collection('userFollowing')
+        .doc(ownerId)
+        .set({});
+    // add activity feed item for that user to notify about new follower (us)
+    activityFeedRef
+        .doc(ownerId)
+        .collection('feedItems')
+        .doc(currentUserId)
+        .set({
+      "type": "follow",
+      "ownerId": ownerId,
+      "username": currentUser.username,
+      "postId": "",
+      "commentData": "",
+      "mediaUrl": "",
+      "userId": currentUserId,
+      "userProfileImg": currentUser.photoUrl,
+      "timestamp": timeStamp,
+    });
+  }
+
+  handleUnfollowUser() {
+    setState(() {
+      isFollowing = false;
+    });
+    // remove follower
+    followersRef
+        .doc(ownerId)
+        .collection('userFollowers')
+        .doc(currentUserId)
+        .get()
+        .then((doc) {
+      if (doc.exists) {
+        doc.reference.delete();
+      }
+    });
+    // remove following
+    followingRef
+        .doc(currentUserId)
+        .collection('userFollowing')
+        .doc(ownerId)
+        .get()
+        .then((doc) {
+      if (doc.exists) {
+        doc.reference.delete();
+      }
+    });
+    // delete activity feed item for them
+    activityFeedRef
+        .doc(ownerId)
+        .collection('feedItems')
+        .doc(currentUserId)
+        .get()
+        .then((doc) {
+      if (doc.exists) {
+        doc.reference.delete();
+      }
+    });
+  }
+
   buildPostHeader() {
     return FutureBuilder(
       future: usersRef.doc(ownerId).get(),
@@ -105,28 +179,62 @@ class _PostState extends State<Post> {
         User user = User.fromDocument(snapshot.data);
         bool isPostOwner = currentUserId == ownerId;
         return ListTile(
-          leading: CircleAvatar(
-            backgroundImage: CachedNetworkImageProvider(user.photoUrl),
-            backgroundColor: Colors.grey,
-          ),
-          title: GestureDetector(
-            onTap: () => showProfile(context, profileId: user.id),
-            child: Text(
-              user.username,
-              style: TextStyle(
-                color: Colors.black,
-                fontWeight: FontWeight.bold,
+            leading: CircleAvatar(
+              backgroundImage: CachedNetworkImageProvider(user.photoUrl),
+              backgroundColor: Colors.grey,
+            ),
+            title: GestureDetector(
+              onTap: () => showProfile(context, profileId: user.id),
+              child: Text(
+                user.username,
+                style: TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
-          ),
-          subtitle: Text(location),
-          trailing: isPostOwner
-              ? IconButton(
-                  onPressed: () => handleDeletePost(context),
-                  icon: Icon(Icons.more_vert),
-                )
-              : Text(''),
-        );
+            subtitle: Text(location),
+            trailing: isPostOwner
+                ? IconButton(
+                    onPressed: () => handleDeletePost(context),
+                    icon: Icon(Icons.more_vert),
+                  )
+                : Container(
+                    padding: EdgeInsets.all(10),
+                    child: isFollowing
+                        ? RaisedButton(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30.0),
+                            ),
+                            child: Text(
+                              "Unfollow",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 15.0,
+                              ),
+                            ),
+                            color: NetworkColors.colorDarkBlue,
+                            onPressed: () {
+                              handleUnfollowUser();
+                            },
+                          )
+                        : RaisedButton(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30.0),
+                            ),
+                            child: Text(
+                              "Follow",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 15.0,
+                              ),
+                            ),
+                            color: NetworkColors.colorDarkBlue,
+                            onPressed: () {
+                              handleFollowUser();
+                            },
+                          ),
+                  ));
       },
     );
   }
@@ -353,6 +461,24 @@ class _PostState extends State<Post> {
         ),
       ],
     );
+  }
+
+  checkIfFollowing() async {
+    DocumentSnapshot doc = await followersRef
+        .doc(ownerId)
+        .collection("userFollowers")
+        .doc(currentUserId)
+        .get();
+    setState(() {
+      isFollowing = doc.exists;
+    });
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    checkIfFollowing();
+    super.initState();
   }
 
   @override

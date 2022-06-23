@@ -20,8 +20,12 @@ class Timeline extends StatefulWidget {
 
 class _TimelineState extends State<Timeline> {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
+  final scrollController = ScrollController();
   List<Post> posts;
   List<String> followingList = [];
+  bool _hasNext = true;
+  int dataLimit = 10;
+  QuerySnapshot startafter;
 
   @override
   void initState() {
@@ -42,6 +46,37 @@ class _TimelineState extends State<Timeline> {
       this.posts = posts;
     });
   }
+
+  // getTimeline() async {
+  //   List<Post> posts;
+
+  //   if (this.posts.isEmpty) {
+  //     startafter = await timelinRef
+  //         .doc(widget.currentUser.id)
+  //         .collection('timelinePosts')
+  //         .orderBy('timestamp', descending: true)
+  //         .limit(dataLimit)
+  //         .get();
+  //     List<Post> posts =
+  //         startafter.docs.map((doc) => Post.fromDocument(doc)).toList();
+  //   } else {
+  //     startafter = await timelinRef
+  //         .doc(widget.currentUser.id)
+  //         .collection('timelinePosts')
+  //         .orderBy('timestamp', descending: true)
+  //         .startAfter(startafter.docs)
+  //         .limit(dataLimit)
+  //         .get()
+  //         .then((value) {
+  //       value.docs.forEach((element) {
+  //         Post post = Post.fromDocument(element);
+  //         this.posts.add(post);
+  //       });
+  //     });
+  //   }
+
+  //   setState(() {});
+  // }
 
   getFollowing() async {
     QuerySnapshot snapshot = await followingRef
@@ -118,6 +153,7 @@ class _TimelineState extends State<Timeline> {
   @override
   void dispose() {
     // TODO: implement dispose
+    scrollController.dispose();
     super.dispose();
   }
 

@@ -45,8 +45,6 @@ class _UploadState extends State<Upload>
 
   /// from the xfile to file datatype
 
-  String anan = "dwad";
-
   TextEditingController locationController = TextEditingController();
   TextEditingController captionController = TextEditingController();
 

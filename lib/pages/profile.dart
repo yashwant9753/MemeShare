@@ -94,7 +94,7 @@ class _ProfileState extends State<Profile> {
                   borderRadius: BorderRadius.all(Radius.circular(50)),
                 ),
                 child: CircleAvatar(
-                  radius: 50.0,
+                  radius: 45.0,
                   backgroundColor: Colors.grey,
                   backgroundImage: NetworkImage(user.photoUrl),
                 ),
@@ -190,7 +190,7 @@ class _ProfileState extends State<Profile> {
                   alignment: Alignment.centerLeft,
                   child: Text(
                     '${user.bio}',
-                    style: TextStyle(fontFamily: "Brand-Regular", fontSize: 11),
+                    style: TextStyle(fontFamily: "Brand-Regular", fontSize: 13),
                   )),
               Divider(
                 height: 1,
@@ -334,40 +334,41 @@ class _ProfileState extends State<Profile> {
     } else {
       // and for other user follow or unfollow Button
       return Container(
-          padding: EdgeInsets.all(8.0),
-          child: isFollowing
-              ? RaisedButton(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30.0),
+        padding: EdgeInsets.all(8.0),
+        child: isFollowing
+            ? RaisedButton(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30.0),
+                ),
+                child: Text(
+                  "Unfollow",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 15.0,
                   ),
-                  child: Text(
-                    "Unfollow",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 15.0,
-                    ),
+                ),
+                color: NetworkColors.colorDarkBlue,
+                onPressed: () {
+                  handleUnfollowUser();
+                },
+              )
+            : RaisedButton(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30.0),
+                ),
+                child: Text(
+                  "Follow",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 15.0,
                   ),
-                  color: NetworkColors.colorDarkBlue,
-                  onPressed: () {
-                    handleUnfollowUser();
-                  },
-                )
-              : RaisedButton(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30.0),
-                  ),
-                  child: Text(
-                    "Follow",
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 15.0,
-                    ),
-                  ),
-                  color: NetworkColors.colorDarkBlue,
-                  onPressed: () {
-                    handleFollowUser();
-                  },
-                ));
+                ),
+                color: NetworkColors.colorDarkBlue,
+                onPressed: () {
+                  handleFollowUser();
+                },
+              ),
+      );
     }
   }
 

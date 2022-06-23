@@ -21,15 +21,23 @@ class _SearchState extends State<Search>
   FocusNode searchFocus;
 
   handleSearch(String query) {
-    Future<QuerySnapshot> users = usersRef
-        .where(
-          "username",
-          isGreaterThanOrEqualTo: query,
-        )
-        .get();
-    setState(() {
-      searchResultsFuture = users;
-    });
+    if (query.isNotEmpty) {
+      String capitalQuery =
+          query.substring(0, 1).toUpperCase() + query.substring(1);
+
+      Future<QuerySnapshot> users = usersRef
+          // .orderBy('displayName')
+          // .startAt([query]).endAt([query + '\uf8ff']).get();
+          .where(
+            "displayName",
+            isGreaterThanOrEqualTo: capitalQuery,
+          )
+          .get();
+
+      setState(() {
+        searchResultsFuture = users;
+      });
+    }
   }
 
   clearSearch() {
@@ -100,6 +108,7 @@ class _SearchState extends State<Search>
           } else {
             UserResult searchResult = UserResult(user);
             searchResults.add(searchResult);
+            print("Added");
           }
         });
         return ListView(

@@ -2,8 +2,6 @@ import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
-
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -74,7 +72,7 @@ class _HomeState extends State<Home> {
 
   @override
   void initState() {
-    Firebase.initializeApp();
+    // Firebase.initializeApp();
 
     super.initState();
     pageController = PageController();
@@ -139,6 +137,7 @@ class _HomeState extends State<Home> {
 
   login() {
     googleSignIn.signIn();
+    
   }
 
   logout() {
@@ -168,6 +167,7 @@ class _HomeState extends State<Home> {
           Upload(currentUser: currentUser),
           ActivityFeed(),
           Profile(profileId: currentUser?.id),
+          TestPage()
         ],
         controller: pageController,
         onPageChanged: onPageChanged,
@@ -192,6 +192,9 @@ class _HomeState extends State<Home> {
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.account_circle),
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.text_snippet),
             ),
           ]),
     );
